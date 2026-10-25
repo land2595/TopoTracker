@@ -1,5 +1,8 @@
 FROM python:3.12-slim
 
+LABEL org.opencontainers.image.source=https://github.com/land2595/topotracker \
+      org.opencontainers.image.description="Tracker dei fumetti Disney italiani letti"
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DATA_DIR=/data

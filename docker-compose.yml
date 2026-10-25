@@ -1,7 +1,8 @@
 services:
   topotracker:
+    # Immagine pubblicata da GitHub Actions. Per compilarla in locale: docker compose up -d --build
+    image: ghcr.io/land2595/topotracker:latest
     build: .
-    image: topotracker:latest
     container_name: topotracker
     ports:
       - "8000:8000"

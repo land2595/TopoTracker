@@ -16,11 +16,26 @@ e tutte le altre testate italiane censite da [I.N.D.U.C.K.S.](https://inducks.or
 
 ## Avvio con Docker
 
+L'immagine pronta è pubblicata su GitHub: `ghcr.io/land2595/topotracker:latest` (per PC x86 e per ARM,
+per esempio NAS e Raspberry Pi).
+
+**Solo Docker:**
+
 ```bash
-git clone https://github.com/land2595/topotracker.git
-cd topotracker
-docker compose up -d --build
+docker run -d --name topotracker -p 8000:8000 -v ./data:/data --restart unless-stopped \
+  ghcr.io/land2595/topotracker:latest
 ```
+
+**Con docker compose:** scarica [`docker-compose.yml`](docker-compose.yml) in una cartella e lancia
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Per aggiornare all'ultima versione: `docker compose pull && docker compose up -d`.
+
+Per compilarla da sorgente invece: `git clone` del repository e `docker compose up -d --build`.
 
 Poi apri <http://localhost:8000>. Al primo avvio l'app scarica i dati da Inducks e li importa: servono alcuni
 minuti (i file sono grandi), la pagina si aggiorna da sola quando ha finito.
