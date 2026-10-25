@@ -227,7 +227,7 @@ h2 { font-size: 1.8rem; }
   transition: transform .1s;
 }
 .pub-tile:hover { transform: rotate(-1deg) scale(1.02); }
-.pub-tile img { width: 76px; aspect-ratio: 3/4; object-fit: cover; border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); }
+.pub-tile img { width: 76px; aspect-ratio: 5/7; object-fit: contain; border: 2px solid var(--ink); border-radius: 4px; background: var(--paper-2); }
 .pub-tile .info { flex: 1; min-width: 0; }
 .pub-tile .t { font-family: var(--title); font-size: 1.35rem; letter-spacing: 1px; line-height: 1.1; margin-bottom: 6px; }
 .pub-tile .c { font-size: .9rem; color: var(--muted); margin-top: 6px; font-weight: 700; }
@@ -270,11 +270,12 @@ h2 { font-size: 1.8rem; }
   box-shadow: var(--shadow);
   cursor: pointer;
   overflow: hidden;
-  aspect-ratio: 3/4;
+  aspect-ratio: 5/7;
   transition: transform .12s;
 }
 .card .cover:hover { transform: translate(-2px, -2px) rotate(-1deg); box-shadow: 7px 7px 0 var(--ink); }
-.card .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* L'immagine non decide mai la dimensione del riquadro: si adatta e resta intera. */
+.card .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
 .card.unread .cover img { filter: saturate(.55) brightness(.97); }
 .card .stamp {
   position: absolute;
@@ -329,7 +330,7 @@ h2 { font-size: 1.8rem; }
 .dialog-close { position: absolute; right: 10px; top: 6px; }
 .dialog-close button { background: none; border: 0; font-size: 2rem; cursor: pointer; }
 .detail { display: flex; gap: 22px; flex-wrap: wrap; }
-.detail img { width: 240px; max-width: 100%; border: 3px solid var(--ink); border-radius: 6px; box-shadow: var(--shadow); }
+.detail img { width: 240px; max-width: 100%; max-height: 70vh; object-fit: contain; border: 3px solid var(--ink); border-radius: 6px; box-shadow: var(--shadow); }
 .detail h2 { padding-right: 34px; }
 .detail .info { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
 .detail dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
