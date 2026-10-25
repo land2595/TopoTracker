@@ -119,7 +119,7 @@ def test_cover_placeholder_and_cache(client, monkeypatch, tmp_path):
             r = client.get("/api/cover", params={"code": "it/TL 1000"})
             assert r.headers["content-type"] == "image/jpeg"
             assert Image.open(io.BytesIO(r.content)).width == config.THUMB_WIDTH
-        assert hits == ["/webusers/webusers/2010/01/it_tl_1000a_001.jpg"]  # scaricata una volta sola
+        assert hits == ["/thumbnails/webusers/2010/01/it_tl_1000a_001.jpg"]  # scaricata una volta sola
     finally:
         srv.shutdown()
 
@@ -137,3 +137,36 @@ def test_index_served(client):
     r = client.get("/")
     assert "TopoTracker" in r.text
     assert client.get("/static/app.js").status_code == 200
+
+
+def test_cropped_thumbnail_is_skipped(client, monkeypatch):
+    from app import config, covers
+
+    def jpeg(w, h):
+        buf = io.BytesIO()
+        Image.new("RGB", (w, h), "blue").save(buf, "JPEG")
+        return buf.getvalue()
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = jpeg(138, 100) if self.path.startswith("/thumb/") else jpeg(700, 980)
+            self.send_response(200)
+            self.send_header("Content-Type", "image/jpeg")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *a):
+            pass
+
+    srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_port}"
+    monkeypatch.setattr(config, "COVER_URL_TEMPLATES", [base + "/thumb/{url}", base + "/full/{url}"])
+    monkeypatch.setattr(covers, "_preferred", 0)
+    try:
+        r = client.get("/api/cover", params={"code": "it/TL 1000"})
+        img = Image.open(io.BytesIO(r.content))
+        assert img.height > img.width  # copertina intera, non la miniatura
+        assert covers._preferred == 1
+    finally:
+        srv.shutdown()

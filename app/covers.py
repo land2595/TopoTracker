@@ -6,6 +6,7 @@ con poche richieste in parallelo per non pesare sul sito.
 
 import hashlib
 import io
+import shutil
 import logging
 import threading
 import time
@@ -50,9 +51,22 @@ def candidate_urls(sitecode: str, url: str):
                 yield i, u
 
 
+# Le copertine della prima versione erano miniature ritagliate: la cache nuova sta in
+# una sottocartella separata e quella vecchia viene cancellata all'avvio.
+CACHE_VERSION = "v2"
+
+
 def cache_path(sitecode: str, url: str):
     h = hashlib.sha1(f"{sitecode}/{url}".encode()).hexdigest()
-    return config.COVER_DIR / h[:2] / f"{h}.jpg"
+    return config.COVER_DIR / CACHE_VERSION / h[:2] / f"{h}.jpg"
+
+
+def clean_old_cache():
+    if not config.COVER_DIR.exists():
+        return
+    for d in config.COVER_DIR.iterdir():
+        if d.is_dir() and d.name != CACHE_VERSION:
+            shutil.rmtree(d, ignore_errors=True)
 
 
 def fetch_image(src: str):
@@ -64,6 +78,9 @@ def fetch_image(src: str):
         raise ValueError(f"risposta {ctype or 'senza tipo'} invece di un'immagine")
     img = Image.open(io.BytesIO(r.content))
     img.load()
+    # Una copertina è verticale: un'immagine larga e piccola è una miniatura ritagliata.
+    if img.width > img.height * 1.15 and img.width < 300:
+        raise ValueError(f"miniatura ritagliata {img.width}x{img.height}, non la copertina intera")
     return img
 
 

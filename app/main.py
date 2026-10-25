@@ -19,6 +19,7 @@ STATIC = Path(__file__).parent / "static"
 @asynccontextmanager
 async def lifespan(app):
     db.init()
+    covers.clean_old_cache()
     if not getattr(app.state, "no_scheduler", False):
         threading.Thread(target=importer.scheduler, daemon=True).start()
     yield
