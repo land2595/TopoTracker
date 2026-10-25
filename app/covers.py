@@ -1,4 +1,4 @@
-"""Copertine: scaricate da outducks.org solo quando servono e salvate su disco.
+"""Copertine: scaricate da Inducks solo quando servono e salvate su disco.
 
 Ogni copertina viene richiesta al massimo una volta (poi si usa la cache),
 con poche richieste in parallelo per non pesare sul sito.
@@ -22,19 +22,32 @@ _client = None
 _client_lock = threading.Lock()
 # Copertine che non si sono potute scaricare: non riprovare per un po'.
 _failed: dict[str, float] = {}
-RETRY_AFTER = 6 * 3600
+RETRY_AFTER = 1800
+# Indice del modello di indirizzo che ha funzionato l'ultima volta.
+_preferred = 0
 
 
 def _http():
     global _client
     with _client_lock:
         if _client is None:
-            _client = httpx.Client(headers={"User-Agent": config.USER_AGENT}, timeout=30, follow_redirects=True)
+            _client = httpx.Client(
+                headers={"User-Agent": config.USER_AGENT, "Referer": "https://inducks.org/",
+                         "Accept": "image/avif,image/webp,image/*,*/*;q=0.8"},
+                timeout=30, follow_redirects=True)
         return _client
 
 
-def remote_url(sitecode: str, url: str) -> str:
-    return config.COVER_URL_TEMPLATE.format(sitecode=sitecode, url=url)
+def candidate_urls(sitecode: str, url: str):
+    templates = config.COVER_URL_TEMPLATES
+    order = [_preferred] + [i for i in range(len(templates)) if i != _preferred]
+    seen = []
+    for i in order:
+        if i < len(templates):
+            u = templates[i].format(sitecode=sitecode or "", url=(url or "").lstrip("/"))
+            if u not in seen:
+                seen.append(u)
+                yield i, u
 
 
 def cache_path(sitecode: str, url: str):
@@ -42,21 +55,37 @@ def cache_path(sitecode: str, url: str):
     return config.COVER_DIR / h[:2] / f"{h}.jpg"
 
 
+def fetch_image(src: str):
+    """Scarica un indirizzo e restituisce l'immagine, oppure solleva un errore leggibile."""
+    r = _http().get(src)
+    r.raise_for_status()
+    ctype = r.headers.get("content-type", "")
+    if "html" in ctype or "text" in ctype:
+        raise ValueError(f"risposta {ctype or 'senza tipo'} invece di un'immagine")
+    img = Image.open(io.BytesIO(r.content))
+    img.load()
+    return img
+
+
 def get(sitecode: str, url: str):
     """Percorso della miniatura in cache, oppure None se non disponibile."""
+    global _preferred
     path = cache_path(sitecode, url)
     if path.exists():
         return path
-    src = remote_url(sitecode, url)
-    if time.time() - _failed.get(src, 0) < RETRY_AFTER:
+    key = f"{sitecode}/{url}"
+    if time.time() - _failed.get(key, 0) < RETRY_AFTER:
         return None
     with _sem:
         if path.exists():
             return path
-        try:
-            r = _http().get(src)
-            r.raise_for_status()
-            img = Image.open(io.BytesIO(r.content))
+        errors = []
+        for i, src in candidate_urls(sitecode, url):
+            try:
+                img = fetch_image(src)
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"{src}: {e}")
+                continue
             img = img.convert("RGB")
             if img.width > config.THUMB_WIDTH:
                 img = img.resize((config.THUMB_WIDTH, round(img.height * config.THUMB_WIDTH / img.width)),
@@ -65,8 +94,29 @@ def get(sitecode: str, url: str):
             tmp = path.with_suffix(".part")
             img.save(tmp, "JPEG", quality=85, optimize=True)
             tmp.replace(path)
+            _preferred = i
             return path
+        log.warning("Copertina non disponibile (%s): %s", key, " | ".join(errors))
+        _failed[key] = time.time()
+        return None
+
+
+def diagnose(sitecode: str, url: str):
+    """Prova tutti gli indirizzi possibili per una copertina e riporta cosa risponde ciascuno."""
+    out = []
+    for _, src in candidate_urls(sitecode, url):
+        row = {"url": src}
+        try:
+            r = _http().get(src)
+            row.update(status=r.status_code, content_type=r.headers.get("content-type"), bytes=len(r.content),
+                       final_url=str(r.url))
+            if r.is_success:
+                try:
+                    img = Image.open(io.BytesIO(r.content))
+                    row["image"] = f"{img.format} {img.width}x{img.height}"
+                except Exception:  # noqa: BLE001
+                    row["inizio_risposta"] = r.text[:300]
         except Exception as e:  # noqa: BLE001
-            log.warning("Copertina non disponibile %s: %s", src, e)
-            _failed[src] = time.time()
-            return None
+            row["error"] = f"{type(e).__name__}: {e}"
+        out.append(row)
+    return out

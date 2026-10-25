@@ -16,7 +16,7 @@ const api = async (path, opts = {}) => {
 };
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const coverUrl = (code) => "/api/cover?code=" + encodeURIComponent(code);
+const coverUrl = (code) => "/api/cover?v=2&code=" + encodeURIComponent(code);
 const pubLink = (code) => "#/testata/" + encodeURIComponent(code);
 const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : 0);
 

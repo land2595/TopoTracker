@@ -211,8 +211,29 @@ def cover(code: str):
         row = conn.execute("SELECT cover_site, cover_url FROM issues WHERE issuecode = ?", (code,)).fetchone()
     path = covers.get(row["cover_site"], row["cover_url"]) if row and row["cover_url"] else None
     if path is None:
-        return Response(PLACEHOLDER, media_type="image/svg+xml", headers={"Cache-Control": "max-age=3600"})
+        return Response(PLACEHOLDER, media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
     return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "max-age=2592000"})
+
+
+@app.get("/api/diagnosi-copertine")
+def cover_diagnosis(code: str = ""):
+    """Aiuta a capire perché le copertine non arrivano: da aprire nel browser."""
+    with db.session() as conn:
+        with_cover = conn.execute("SELECT COUNT(*) FROM issues WHERE cover_url IS NOT NULL").fetchone()[0]
+        total = conn.execute("SELECT COUNT(*) FROM issues").fetchone()[0]
+        if code:
+            row = conn.execute("SELECT issuecode, cover_site, cover_url FROM issues WHERE issuecode = ?",
+                               (code,)).fetchone()
+        else:
+            row = conn.execute("""SELECT issuecode, cover_site, cover_url FROM issues WHERE cover_url IS NOT NULL
+                                  ORDER BY (pubcode = 'it/TL') DESC, sort_num DESC LIMIT 1""").fetchone()
+        sample_urls = [dict(r) for r in conn.execute(
+            "SELECT issuecode, cover_site, cover_url FROM issues WHERE cover_url IS NOT NULL LIMIT 5")]
+    out = {"numeri": total, "numeri_con_copertina": with_cover, "esempi": sample_urls}
+    if row and row["cover_url"]:
+        out["prova"] = {"numero": row["issuecode"], "sitecode": row["cover_site"], "url": row["cover_url"],
+                        "tentativi": covers.diagnose(row["cover_site"], row["cover_url"])}
+    return out
 
 
 @app.get("/api/stats")

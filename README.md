@@ -62,6 +62,9 @@ L'app **non fa scraping** del sito. Usa i dump ufficiali che Inducks mette a dis
 I dump vengono riscaricati ogni 7 giorni (configurabile). Le copertine vengono scaricate da outducks.org
 **solo quando le guardi**, una volta sola, e poi servite dalla cache locale.
 
+Se le copertine non compaiono, apri <http://localhost:8000/api/diagnosi-copertine>: mostra quali indirizzi
+l'app ha provato e cosa hanno risposto.
+
 Se il download automatico non funziona (per esempio perché il sito blocca le richieste automatiche),
 scarica a mano i quattro file `.isv` dall'indirizzo sopra, mettili in `data/isv/` e premi
 *Impostazioni → Rileggi i file*.
@@ -81,7 +84,7 @@ Variabili d'ambiente (in `docker-compose.yml`):
 | `AUTO_IMPORT` | `1` | importa automaticamente al primo avvio |
 | `COUNTRY` | `it` | paese delle testate da importare |
 | `INDUCKS_ISV_URL` | `https://inducks.org/inducks/isv/` | da dove scaricare i dump |
-| `COVER_URL_TEMPLATE` | `https://outducks.org/{sitecode}/{url}` | indirizzo delle immagini di copertina |
+| `COVER_URL_TEMPLATE` | | indirizzo delle copertine da provare per primo (di default ne prova diversi da solo) |
 | `THUMB_WIDTH` | `360` | larghezza delle copertine salvate in cache |
 
 ## Sviluppo

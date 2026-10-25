@@ -111,7 +111,9 @@ def test_cover_placeholder_and_cache(client, monkeypatch, tmp_path):
 
     srv = http.server.HTTPServer(("127.0.0.1", 0), H)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    monkeypatch.setattr(config, "COVER_URL_TEMPLATE", f"http://127.0.0.1:{srv.server_port}/{{sitecode}}/{{url}}")
+    base = f"http://127.0.0.1:{srv.server_port}"
+    # Il primo indirizzo non risponde: deve passare al successivo.
+    monkeypatch.setattr(config, "COVER_URL_TEMPLATES", ["http://127.0.0.1:1/{sitecode}/{url}", base + "/{sitecode}/{url}"])
     try:
         for _ in range(2):
             r = client.get("/api/cover", params={"code": "it/TL 1000"})
