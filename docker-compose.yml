@@ -1,0 +1,16 @@
+services:
+  topotracker:
+    build: .
+    image: topotracker:latest
+    container_name: topotracker
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      # Testate seguite al primo avvio (codici Inducks, separati da virgola)
+      DEFAULT_FOLLOWED: "it/TL"
+      # Ogni quanti giorni riscaricare i dati da Inducks (0 = solo a mano)
+      UPDATE_INTERVAL_DAYS: "7"
+      TZ: "Europe/Rome"
+    restart: unless-stopped

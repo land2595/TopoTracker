@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TopoTracker</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="masthead">
+    <a href="#/" class="brand" aria-label="TopoTracker, home">
+      <span class="ears" aria-hidden="true"><i></i><i></i><b></b></span>
+      <span class="brand-text">Topo<span>Tracker</span></span>
+    </a>
+    <nav class="nav">
+      <a href="#/" data-nav="home">Le mie testate</a>
+      <a href="#/testate" data-nav="testate">Tutte le testate</a>
+      <a href="#/impostazioni" data-nav="impostazioni">Impostazioni</a>
+    </nav>
+    <form class="search" id="search-form" role="search">
+      <input id="search-input" type="search" placeholder="Cerca: Topolino 1000" autocomplete="off" aria-label="Cerca un numero">
+      <button type="submit" aria-label="Cerca">&#128269;</button>
+    </form>
+  </header>
+  <div class="banner" id="banner" hidden></div>
+  <main id="view" class="view"></main>
+
+  <dialog id="issue-dialog" class="panel-dialog">
+    <form method="dialog" class="dialog-close"><button aria-label="Chiudi">&times;</button></form>
+    <div id="issue-dialog-body"></div>
+  </dialog>
+
+  <footer class="footer">
+    Dati e copertine da <a href="https://inducks.org" target="_blank" rel="noopener">I.N.D.U.C.K.S.</a>,
+    il database dei fumetti Disney curato dai fan. Progetto personale, non affiliato a Disney o Panini.
+  </footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>
